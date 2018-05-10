@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
@@ -25,29 +26,35 @@ class PaymentController extends Controller
         return $join;
     }
 
-    public function store(Request $request, Payment $payment){
+    public function store(Request $request){
 //        Payment::create($request->all());
-        $this->validate($request,[
+        $validator = Validator::make($request->all(),[
             'value' => 'required',
             'time'  =>  'required',
             'id_user' => 'required',
             'id_order'  => 'required'
         ]);
 
-        $payment = $payment->create([
-            'value'     => $request->value,
-            'time'     => $request->time,
-            'id_user'     => $request->id_user,
-            'id_order'     => $request->id_order,
 
-        ]);
+        $result = array();
 
-        if ($payment){
-            return response()->json(['status' => 'success', 'message' => 'data has been created'], 201);
+        if ($validator->fails()){
+            $result['status'] = false;
+            $result['error'] = 'Bad Parameter';
+            return json_encode($result);
         }else{
-            return response()->json(['status' => 'error', 'message' => 'error cannot create data'], 500);
-        }
+            $payment = Payment::create([
+                'value'     => $request->value,
+                'time'     => $request->time,
+                'id_user'     => $request->id_user,
+                'id_order'     => $request->id_order,
 
+            ]);
+
+            $result['status'] = true;
+            $result['result'] = $payment;
+            return json_encode($result);
+        }
 
     }
 
